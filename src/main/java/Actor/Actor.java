@@ -1,8 +1,5 @@
 package Actor;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -13,7 +10,6 @@ import java.util.concurrent.*;
  * Time: 11:22 PM
  */
 public abstract class Actor implements MessageReceiver {
-    private static Log log = LogFactory.getLog(Actor.class);
     private ExecutorService receiverRunner = Executors.newSingleThreadExecutor();
     private Queue<QueueMessage> messageQueue = new ConcurrentLinkedQueue<QueueMessage>();
     private Semaphore queueSemaphore = new Semaphore(0, true);
@@ -27,8 +23,8 @@ public abstract class Actor implements MessageReceiver {
         future = receiverRunner.submit(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-                boolean shutDown = false;
-                while (!shutDown) {
+
+                for (boolean shutDown = false; !shutDown; ) {
                     while (!messageQueue.isEmpty()) {
                         queueSemaphore.acquire();
                         QueueMessage message = messageQueue.poll();
@@ -62,7 +58,6 @@ public abstract class Actor implements MessageReceiver {
     public boolean isStopped() {
         return (future == null) || (future.isCancelled() || future.isDone());
     }
-
 
     public UUID tell(Object message, Actor sender) {
         if (message == null) throw new IllegalArgumentException("message is null");
